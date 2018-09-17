@@ -22,7 +22,7 @@ function getData(){
     req.send();
     req.onload=function(){
         data=JSON.parse(req.responseText);
-        // console.log(JSON.stringify(data, null, 4));
+        console.log(JSON.stringify(data, null, 4));
         processRate(data.rates);
         dataFacilities=data.facilities;
         dataClients=data.clients;

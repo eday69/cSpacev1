@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>cSpace Booking System</title>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:300|Open+Sans' rel='stylesheet' type='text/css'>
+
+  </head>
+
+  <style>
+body {
+  margin:0;
+  padding:0;
+  height:100%;
+  background-image: url(images/cSpace.jpg);
+  background-size:cover
+}
+.container {
+  width:100vw;
+  height:100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+#title {
+  text-align: center;
+  font-family: "Roboto";
+  font-size:3em;
+}
+.locations {
+  width: 60vw;
+  height: 50vh;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-around;
+  background-color: #F0FCD8 ;
+  box-shadow: 1px 1px 10px;
+  border-radius: 2px;
+  opacity:0.7;
+}
+.location {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 20vw;
+  height: 9vh;
+  opacity: unset;
+  background-color: rgba(255,255,255,0.99);
+  color: black;
+  font-family: "Roboto";
+  font-weight: bold;
+  font-size:1.2em;
+  border: 2px solid gray;
+}
+.location:hover {
+  border: 2px solid red;
+  cursor: pointer;
+}
+</style>
+
+<body>
+  <div class='container'>
+    <div id='title'>cSpace Online Booking System</div>
+    <div class='locations'>
+      <div class='location'>
+        <a href="cspacebookings.html" target="_self">
+          <img src='images/cSpace_logo.png'
+               alt='See cSpace meeting rooms availability'
+               title='See cSpace meeting rooms availability'>
+        </a>
+      </div>
+      <div class='location'>
+        Future location
+      </div>
+    </div>
+  </div>
+</body>
+</html>
