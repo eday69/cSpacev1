@@ -3,3 +3,5 @@ hello.html
 worksheet_tabs.py
 test.html
 clients.py
+.DS_Store
+static/.DS_Store
