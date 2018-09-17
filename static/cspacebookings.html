@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>cSpace Booking System</title>
+  </head>
+  <body>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:300|Open+Sans' rel='stylesheet' type='text/css'>
+
+    <script type="text/javascript">
+
+const dataRates={};
+var dataFacilities={};
+// const strlocation='King Edward';
+const colors=['#C39BD3','#7FB3D5','#7DCEA0','#F0B27A','#808B96'];
+
+function getData(){
+  // console.log('In');
+    var linkurl="http://127.0.0.1:5000/bookinfo";
+    req=new XMLHttpRequest();
+    req.open("GET", linkurl, true);
+    req.send();
+    req.onload=function(){
+        data=JSON.parse(req.responseText);
+        // console.log(JSON.stringify(data, null, 4));
+        processRate(data.rates);
+        dataFacilities=data.facilities;
+        dataClients=data.clients;
+        processData(data.bookings);
+        // console.log(JSON.stringify(data.rates, null, 4));
+        // console.log(JSON.stringify(dataClients, null, 4));
+        // console.log(dataFacilities['ArtPark'].Type);
+        // processData(data);
+     };
+}
+
+function processRate(rates) {
+    for (const [key, data] of Object.entries(rates)) {
+      var i=0;
+      for (const [type, credit] of Object.entries(data)) {
+        dataRates[type]={ 'Credits': credit, 'Color': colors[i]}
+        i++;
+      }
+    }
+    // console.log(dataRates);
+    var elem = document.getElementById("rate_info");
+    var str="";
+    for (const [key, data] of Object.entries(dataRates)) {
+      // console.log(key);
+      str+="<div class='rate' style='background-color:"+data.Color+"'";
+      str+=" onmousemove='showData(\"rate\",\""+key+"\",-1);' onmouseout=hideData();";
+      str+=">"+data.Credits+"</div>";
+    }
+    elem.insertAdjacentHTML('beforeend', str);
+}
+
+function showData(datatype, info, right) {
+  var ev = window.event;
+  var posX = ev.clientX;
+  var posY = ev.clientY;
+  var element = document.elementFromPoint(posX, posY);
+  var elem = document.getElementById("tooltip");
+  elem.style.top=element.offsetTop+5+'px';
+  if (right == 1) {
+    elem.style.left=posX+10+'px';
+  }
+  else {
+    elem.style.left=(posX-elem.offsetWidth-10)+'px';
+//    console.log(posX+10, elem.offsetWidth, (posX+10-elem.offsetWidth));
+  }
+  elem.style.visibility = "visible";
+  // elem.style.hover='pointer';
+  if (datatype == 'clt') {
+    elem.innerHTML=getClientInfo(info);
+  }
+  else {
+    elem.innerHTML=getRateInfo(info);
+  }
+}
+
+function hideData() {
+  var elem = document.getElementById("tooltip");
+  elem.style.visibility = "hidden";
+  // elem.style.cursor='pointer';
+}
+
+function showmonth(mdays, mrows, month) {
+  // Hide month info for months not displayed
+  var months = document.getElementsByClassName('month'),
+      i = months.length;
+  while(i--) {
+    months[i].style.visibility = "hidden";
+    months[i].style.display = "none";
+  }
+
+  // Set default (not selected) background to month tabs
+  var months = document.getElementsByClassName('monthname'),
+      i = months.length;
+  while(i--) {
+    months[i].style.backgroundColor = "green";
+  }
+
+  document.documentElement.style.setProperty("--colNum", mdays);
+  document.documentElement.style.setProperty("--rowNum", mrows);
+
+  // Show month data of selected month
+  var elem = document.getElementById(month);
+  elem.style.visibility = "visible";
+  elem.style.display = "grid";
+  // Set lightgreen to displayed month
+  var elem = document.getElementById("mn"+month);
+  elem.style.backgroundColor = "lightgreen";
+}
+
+function daysInMonth (month, year) {
+    return new Date(year, month, 0).getDate();
+}
+
+function getClientInfo(name) {
+  var str="";
+  // console.log(name, dataClients[name], dataClients[name][name]);
+  str+="<p class='client'>" + name + " " + dataClients[name][name] + "</p>";
+  if (dataClients[name].issues) {
+    str+="<p class='clientissue'>Issue ! : "+dataClients[name].issues+"</p>";
+  }
+  return str;
+}
+
+function getRateInfo(rate) {
+  var str="";
+  str+="<p class='client'>Type : " + rate + "</p>";
+  return str;
+}
+
+function processData(bookdata) {
+    var mMonths=Object.keys(bookdata);
+    // String contains month tabs
+    var miStr="";
+    // String contains daily booking information
+    var miStrRoom="";
+    // For each month (key), we will process the data {room: {day: client }}
+    for (const [key, data] of Object.entries(bookdata)) {
+        // We will form a Date object to get Month name
+        var year = key.substring(0,4);
+        var objDate = new Date(key.substring(5,7) +"/01/"+year),
+            locale = "en-us",
+            month = objDate.toLocaleString(locale, { month: "short" });
+
+        // Get number of days for month
+        var maxDays=daysInMonth(key.substring(5,7), year);
+        // Set max days (number of columns) in our month
+        // document.documentElement.style.setProperty("--colNum", maxdays);
+        // Get number of rooms (rows) in the month
+        var maxRows=Object.keys(data).length+1;
+        // Set max number of rows (rooms)
+        // document.documentElement.style.setProperty("--rowNum", maxRows);
+        // Formation of month tab string
+        miStr+="<div id='mn"+key+"' class='monthname' onclick='showmonth("+maxDays+","+ maxRows+",\""+key+"\");'>"+month+" "+year+"</div>";
+
+        // Rooms will be rows, days will be columns
+        // Month container
+        miStrRoom+="<div id='"+key+"' class='month'>";
+        // We put in column 'header' in blank for room names
+        miStrRoom+="<div class='room'>&nbsp</div>";
+        // Make row of day values (day header)
+        for (var i=1; i<=maxDays; i++) {
+          miStrRoom+="<div class='monthday'>"+i+"</div>";
+        }
+        // Now, for each room, we will process the dates {day: client}
+        for (const [room, dates] of Object.entries(data)) {
+          miStrRoom+="<div class='room'>"+room+"</div>";
+          // console.log(room);
+          // For each date, we have one client (maybe)
+          for (const [mday, mclient] of Object.entries(dates)) {
+            if (mday <= maxDays) {
+              miStrRoom+="<div ";
+              // If we have a client, we want to show more information
+              if (mclient) {
+                // console.log(room);
+                // console.log(dataFacilities['ArtPark'].Type);
+                // console.log('Room booked: '+dataFacilities[room].Type);
+                // console.log(key, room, mday, mclient);
+                miStrRoom+="style='background-color:"+dataRates[dataFacilities[room].Type].Color+"' ";
+                miStrRoom+="class='booked' onmousemove='showData(\"clt\",\""+mclient+"\",1);' onmouseout=hideData();";
+                // miStrRoom+="class='booked' ";
+              }
+              // else, just show a blank, empty square
+              else {
+                miStrRoom+="class='notbooked' ";
+              }
+              miStrRoom+="></div>";
+            }
+          }
+        }
+        miStrRoom+="</div>"
+    }
+    // Now insert the HTML generated into correct position
+    // First month tabs
+    document.getElementsByClassName('month_data')[0].insertAdjacentHTML('beforeend', miStr);
+    // Second, month detail info
+    document.getElementsByClassName('monthdata_container')[0].innerHTML=miStrRoom;
+    // Next, show first month as selected and hide the rest on the months (the detail)
+    showmonth(daysInMonth(mMonths[0].substring(5,7), mMonths[0].substring(0,4)),
+      maxRows,mMonths[0]);
+}
+
+function startProcess() {
+  // console.log('Starting !!');
+  getData();
+}
+
+// Start the process, first get data, process it and present it.
+startProcess();
+
+    </script>
+
+<style>
+:root {
+  --colNum: 30;
+  --rowNum: 18;
+  --colDesk: #E74C3C;
+  --colGall: #8E44AD;
+  --colMeet: #3498DB;
+  --colThea: #16A085;
+  --colOutd: #F39C12;
+}
+body {
+  margin:0;
+  padding:0;
+  height:100%;
+}
+.container {
+  width:100vw;
+  height:100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+#title {
+  text-align: center;
+  font-family: "Roboto";
+  font-size:2em;
+  margin-bottom: 3px;
+}
+.data_container {
+  display: flex;
+  flex-direction: row;
+  width: 90vw;
+  height: 90vh;
+  box-shadow: 1px 1px 10px;
+  padding: 4px;
+  border-radius: 2px;
+}
+
+.booking_container {
+  width: 87vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.months_container {
+  height: 5vh;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+}
+.location_data {
+  width: 20%;
+  display: flex;
+  align-items: left;
+  flex-direction: row;
+  justify-content: flex-start;
+  font-family: Roboto;
+  font-size: 1em;
+  text-align: left;
+}
+
+.month_data {
+  width: 80%;
+  display: flex;
+  align-items: right;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.monthname {
+  width: 8vw;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Roboto;
+  background-color: green;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  margin-left: 1px;
+  font-size: 1em;
+  color: white;
+  border: 1px solid white;
+}
+.monthname:hover {
+  cursor : pointer;
+  border: 1px solid red;
+}
+
+.monthdata_container {
+  height: 85vh;
+  border: 1px solid lightgray;
+}
+
+.month {
+  visibility: hidden;
+  width:100%;
+  height:100%;
+  display: grid;
+  grid-template-columns: 5fr repeat(var(--colNum), 1fr);
+  grid-template-rows: repeat(var(--rowNum), 1fr);
+  grid-gap: 2px;
+  background-color: lightgray;
+}
+.room {
+  font-family: Roboto;
+  font-size: 0.7em;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  background-color: gray;
+  padding: 2px;
+  color: white;
+}
+.booked {
+}
+.booked:hover {
+  cursor: pointer;
+  filter: brightness(45%);
+  /* background-color: indigo; */
+}
+.notbooked {
+  background-color: white;
+}
+.monthday {
+  background-color: lightgreen;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Roboto;
+  font-size: 1em;
+}
+.rate_container {
+  width: 3.5vw;
+  display: flex;
+  align-items: left;
+  flex-flow: row;
+  margin-top: 4em;
+}
+.rate_info {
+  width:4vw;
+  height:30vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 12px repeat(5, 1fr);
+  grid-gap: 1px;
+  margin-left: 8px;
+  font-family: Roboto;
+  font-size: 0.7em;
+  text-align: center;
+  /* border: 1px solid blue; */
+  box-shadow: 1px 1px 10px;
+  border-radius: 4px;
+
+}
+.rate {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* background-color: var(--colOutd); */
+}
+.rate:hover {
+  filter: brightness(45%);
+}
+#tooltip{
+  /* display: none; */
+  visibility: hidden;
+  position:absolute;
+  background-color: lightgray;
+  width: 12vw;
+  height: 10vh;
+  opacity:0.85;
+  border-radius: 6px;
+  font-family: Roboto;
+  font-size: 1em;
+  font-weight: bold;
+  padding: 2px;
+}
+.client {
+  font-family: Roboto;
+  font-size: 0.9em;
+}
+.clientissue {
+  font-size: 0.7em;
+  font-weight: bold;
+}
+</style>
+<div class='container'>
+  <div id='title'>cSpace Online Booking System</div>
+  <div class='data_container'>
+    <div class='booking_container'>
+      <div class='months_container'>
+        <div class='location_data'>Location: King Edward</div>
+        <div class='month_data'></div>
+      </div>
+      <div class='monthdata_container'></div>
+    </div>
+    <div class='rate_container'>
+      <div id='rate_info' class='rate_info'>
+        <div>Rates</div>
+        <!-- <div class='rate'></div> -->
+        <!-- <div class='rate'></div> -->
+        <!-- <div class='rate'></div> -->
+        <!-- <div class='rate'></div> -->
+        <!-- <div class='rate'></div> -->
+      </div>
+    </div>
+  </div>
+</div>
+<div id='tooltip'></div>
+</body>
+</html>
